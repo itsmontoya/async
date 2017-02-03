@@ -2,69 +2,53 @@ package aio
 
 import (
 	"fmt"
+	//	"os"
 	"os"
 	"testing"
 )
 
 func TestBasic(t *testing.T) {
 	var (
-		f   *File
-		wf  *File
-		bs  []byte
-		err error
+		f     *File
+		wf    *File
+		oresp *OpenResp
 	)
 
 	aio := New()
-	fc, ec := aio.Open("./test.txt")
 
-	select {
-	case f = <-fc:
-	case err = <-ec:
-		t.Fatal(err)
-		return
+	if oresp = <-aio.Open("./test.txt"); oresp.err != nil {
+		t.Fatal(oresp.err)
 	}
 
-	bc, ec := f.Read()
+	f = oresp.f
 
-	select {
-	case bs = <-bc:
-	case err = <-ec:
-		t.Fatal(err)
-		return
+	if oresp = <-aio.OpenFile("./testWrite.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); oresp.err != nil {
+		t.Fatal(oresp.err)
 	}
 
-	fmt.Println(string(bs))
+	wf = oresp.f
 
-	fc, ec = aio.OpenFile("./testWrite.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	var (
+		buf [32]byte
+		n   int
+		err error
+	)
 
-	select {
-	case wf = <-fc:
-	case err = <-ec:
+	if n, err = f.Read(buf[:]); err != nil {
 		t.Fatal(err)
-		return
 	}
 
-	dc, ec := wf.Write([]byte("hai hai hai!"))
-	select {
-	case <-dc:
-	case err = <-ec:
+	fmt.Println(string(buf[:n]))
+
+	if _, err = wf.Write([]byte("hai hai hai!")); err != nil {
 		t.Fatal(err)
-		return
 	}
 
-	sc, ec := wf.Close()
-	select {
-	case <-sc:
-	case err = <-ec:
+	if err = wf.Close(); err != nil {
 		t.Fatal(err)
-		return
 	}
 
-	sc, ec = aio.Delete("./testWrite.txt")
-	select {
-	case <-sc:
-	case err = <-ec:
+	if err = <-aio.Delete("./testWrite.txt"); err != nil {
 		t.Fatal(err)
-		return
 	}
 }
