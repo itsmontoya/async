@@ -47,6 +47,7 @@ func (t *thread) read(r *readRequest) {
 	var resp RWResp
 	resp.n, resp.err = r.f.Read(r.b)
 	r.resp <- &resp
+	releaseReadRequest(r)
 }
 
 func (t *thread) write(r *writeRequest) {

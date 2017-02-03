@@ -3,6 +3,7 @@ package aio
 import (
 	"os"
 
+	"fmt"
 	"github.com/missionMeteora/toolkit/errors"
 )
 
@@ -23,11 +24,10 @@ func (f *File) Read(b []byte) (n int, err error) {
 
 // ReadAsync will read a file asynchronously
 func (f *File) ReadAsync(b []byte) <-chan *RWResp {
-	var r readRequest
+	r := acquireReadRequest()
 	r.b = b
-	r.resp = make(chan *RWResp, 1)
 	r.f = f.f
-	f.rq <- &r
+	f.rq <- r
 	return r.resp
 }
 

@@ -87,6 +87,8 @@ func BenchmarkAIO(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+
+	b.ReportAllocs()
 }
 
 func BenchmarkStdlib(b *testing.B) {
@@ -105,6 +107,8 @@ func BenchmarkStdlib(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+
+	b.ReportAllocs()
 }
 
 func BenchmarkAIOPara(b *testing.B) {
@@ -128,6 +132,8 @@ func BenchmarkAIOPara(b *testing.B) {
 			buf.Reset()
 		}
 	})
+
+	b.ReportAllocs()
 }
 
 func BenchmarkStdlibPara(b *testing.B) {
@@ -151,4 +157,6 @@ func BenchmarkStdlibPara(b *testing.B) {
 			buf.Reset()
 		}
 	})
+
+	b.ReportAllocs()
 }
