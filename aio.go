@@ -8,10 +8,13 @@ import (
 // New returns a new AIO
 func New() *AIO {
 	a := AIO{
-		rq: make(chan interface{}, 32),
+		rq: make(chan interface{}, 1024),
 	}
 
 	t := newThread(a.rq)
+	go t.listen()
+
+	t = newThread(a.rq)
 	go t.listen()
 	return &a
 }

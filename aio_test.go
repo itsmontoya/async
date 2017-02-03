@@ -3,8 +3,17 @@ package aio
 import (
 	"fmt"
 	//	"os"
+	"bytes"
+	"io"
 	"os"
 	"testing"
+)
+
+var ta = New()
+var testBuf = bytes.NewBuffer(nil)
+
+const (
+	testFilePath = "./testing/declarationOfIndependence.txt"
 )
 
 func TestBasic(t *testing.T) {
@@ -51,4 +60,95 @@ func TestBasic(t *testing.T) {
 	if err = <-aio.Delete("./testWrite.txt"); err != nil {
 		t.Fatal(err)
 	}
+
+	or := <-ta.Open(testFilePath)
+	if or.err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := io.Copy(testBuf, or.f); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func BenchmarkAIO(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testBuf.Reset()
+		or := <-ta.Open(testFilePath)
+		if or.err != nil {
+			b.Fatal(or.err)
+		}
+
+		if _, err := io.Copy(testBuf, or.f); err != nil {
+			b.Fatal(err)
+		}
+
+		if err := or.f.Close(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkStdlib(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testBuf.Reset()
+		f, err := os.Open(testFilePath)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		if _, err := io.Copy(testBuf, f); err != nil {
+			b.Fatal(err)
+		}
+
+		if err := f.Close(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkAIOPara(b *testing.B) {
+	b.SetParallelism(64)
+	b.RunParallel(func(pb *testing.PB) {
+		buf := bytes.NewBuffer(nil)
+		for pb.Next() {
+			or := <-ta.Open(testFilePath)
+			if or.err != nil {
+				b.Fatal(or.err)
+			}
+
+			if _, err := io.Copy(buf, or.f); err != nil {
+				b.Fatal(err)
+			}
+
+			if err := or.f.Close(); err != nil {
+				b.Fatal(err)
+			}
+
+			buf.Reset()
+		}
+	})
+}
+
+func BenchmarkStdlibPara(b *testing.B) {
+	b.SetParallelism(64)
+	b.RunParallel(func(pb *testing.PB) {
+		buf := bytes.NewBuffer(nil)
+		for pb.Next() {
+			f, err := os.Open(testFilePath)
+			if err != nil {
+				b.Fatal(err)
+			}
+
+			if _, err := io.Copy(buf, f); err != nil {
+				b.Fatal(err)
+			}
+
+			if err := f.Close(); err != nil {
+				b.Fatal(err)
+			}
+
+			buf.Reset()
+		}
+	})
 }
