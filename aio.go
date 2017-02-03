@@ -187,7 +187,19 @@ type File struct {
 }
 
 // Read will read a file
-func (f *File) Read() (bc <-chan []byte, ec <-chan error) {
+func (f *File) Read() (b []byte, err error) {
+	bc, ec := f.ReadAsync()
+
+	select {
+	case b = <-bc:
+	case err = <-ec:
+	}
+
+	return
+}
+
+// ReadAsync will read a file asynchronously
+func (f *File) ReadAsync() (bc <-chan []byte, ec <-chan error) {
 	var r readRequest
 	r.readCh = make(chan []byte, 1)
 	r.errCh = make(chan error, 1)
