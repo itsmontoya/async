@@ -25,13 +25,13 @@ func TestBasic(t *testing.T) {
 
 	aio := New()
 
-	if oresp = <-aio.Open("./test.txt"); oresp.err != nil {
+	if oresp = <-aio.Open("./testing/helloWorld.txt"); oresp.err != nil {
 		t.Fatal(oresp.err)
 	}
 
 	f = oresp.f
 
-	if oresp = <-aio.OpenFile("./testWrite.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); oresp.err != nil {
+	if oresp = <-aio.OpenFile("./testing/testWrite.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); oresp.err != nil {
 		t.Fatal(oresp.err)
 	}
 
@@ -57,7 +57,7 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = <-aio.Delete("./testWrite.txt"); err != nil {
+	if err = <-aio.Delete("./testing/testWrite.txt"); err != nil {
 		t.Fatal(err)
 	}
 
