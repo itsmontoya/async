@@ -41,6 +41,7 @@ func (t *thread) open(r *openRequest) {
 	var resp OpenResp
 	resp.f, resp.err = newFile(r, t.rq)
 	r.resp <- &resp
+	releaseOpenRequest(r)
 }
 
 func (t *thread) read(r *readRequest) {

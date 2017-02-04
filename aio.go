@@ -31,12 +31,11 @@ func (a *AIO) Open(key string) <-chan *OpenResp {
 
 // OpenFile will open a new file with flag and perm
 func (a *AIO) OpenFile(key string, flag int, perm os.FileMode) <-chan *OpenResp {
-	var or openRequest
+	or := acquireOpenRequest()
 	or.key = key
 	or.flag = flag
 	or.perm = perm
-	or.resp = make(chan *OpenResp, 1)
-	a.rq <- &or
+	a.rq <- or
 	return or.resp
 }
 

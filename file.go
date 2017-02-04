@@ -3,7 +3,6 @@ package aio
 import (
 	"os"
 
-	"fmt"
 	"github.com/missionMeteora/toolkit/errors"
 )
 
