@@ -20,6 +20,14 @@ var openP = sync.Pool{
 	},
 }
 
+var closeP = sync.Pool{
+	New: func() interface{} {
+		return &closeRequest{
+			resp: make(chan error),
+		}
+	},
+}
+
 func acquireReadRequest() (rr *readRequest) {
 	var ok bool
 	if rr, ok = readP.Get().(*readRequest); !ok {
@@ -46,4 +54,18 @@ func acquireOpenRequest() (or *openRequest) {
 
 func releaseOpenRequest(or *openRequest) {
 	openP.Put(or)
+}
+
+func acquireCloseRequest() (cr *closeRequest) {
+	var ok bool
+	if cr, ok = closeP.Get().(*closeRequest); !ok {
+		panic("invalid pool type")
+	}
+
+	return
+}
+
+func releaseCloseRequest(cr *closeRequest) {
+	cr.f = nil
+	closeP.Put(cr)
 }

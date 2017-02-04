@@ -50,14 +50,14 @@ func (a *AIO) Delete(key string) <-chan error {
 
 // OpenResp is a response for open requests
 type OpenResp struct {
-	f   *File
-	err error
+	F   *File
+	Err error
 }
 
 // RWResp is a response for read/write requests
 type RWResp struct {
-	n   int
-	err error
+	N   int
+	Err error
 }
 
 type openRequest struct {
@@ -85,7 +85,7 @@ type writeRequest struct {
 type closeRequest struct {
 	f *os.File
 
-	errCh chan error
+	resp chan error
 }
 
 type deleteRequest struct {

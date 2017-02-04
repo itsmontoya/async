@@ -39,26 +39,27 @@ func (t *thread) listen() {
 
 func (t *thread) open(r *openRequest) {
 	var resp OpenResp
-	resp.f, resp.err = newFile(r, t.rq)
+	resp.F, resp.Err = newFile(r, t.rq)
 	r.resp <- &resp
 	releaseOpenRequest(r)
 }
 
 func (t *thread) read(r *readRequest) {
 	var resp RWResp
-	resp.n, resp.err = r.f.Read(r.b)
+	resp.N, resp.Err = r.f.Read(r.b)
 	r.resp <- &resp
 	releaseReadRequest(r)
 }
 
 func (t *thread) write(r *writeRequest) {
 	var resp RWResp
-	resp.n, resp.err = r.f.Write(r.b)
+	resp.N, resp.Err = r.f.Write(r.b)
 	r.resp <- &resp
 }
 
 func (t *thread) close(r *closeRequest) {
-	r.errCh <- r.f.Close()
+	r.resp <- r.f.Close()
+	releaseCloseRequest(r)
 }
 
 func (t *thread) delete(r *deleteRequest) {
