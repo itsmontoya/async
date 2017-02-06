@@ -10,7 +10,7 @@ var p = newPools()
 // New returns a new AIO
 func New(numThreads int) *AIO {
 	a := AIO{
-		rq: make(chan interface{}, 1024),
+		rq: make(chan interface{}, 1024*32),
 	}
 
 	for i := 0; i < numThreads; i++ {

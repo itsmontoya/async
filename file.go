@@ -6,6 +6,17 @@ import (
 	"github.com/missionMeteora/toolkit/errors"
 )
 
+func newFile(r *openRequest, rq chan<- interface{}) (f *File, err error) {
+	f = p.acquireFile()
+	if f.f, err = os.OpenFile(r.key, r.flag, r.perm); err != nil {
+		f = nil
+		return
+	}
+
+	f.rq = rq
+	return
+}
+
 // File is a file
 type File struct {
 	f *os.File
