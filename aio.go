@@ -5,6 +5,8 @@ import (
 	//	"github.com/missionMeteora/toolkit/errors"
 )
 
+var p = newPools()
+
 // New returns a new AIO
 func New(numThreads int) *AIO {
 	a := AIO{
@@ -25,13 +27,22 @@ type AIO struct {
 }
 
 // Open will open a new file for reading
-func (a *AIO) Open(key string) <-chan *OpenResp {
+func (a *AIO) Open(key string) (f *File, err error) {
 	return a.OpenFile(key, os.O_RDONLY, 0)
 }
 
 // OpenFile will open a new file with flag and perm
-func (a *AIO) OpenFile(key string, flag int, perm os.FileMode) <-chan *OpenResp {
-	or := acquireOpenRequest()
+func (a *AIO) OpenFile(key string, flag int, perm os.FileMode) (f *File, err error) {
+	resp := <-a.OpenFileAsync(key, flag, perm)
+	f = resp.F
+	err = resp.Err
+	p.releaseOpenResp(resp)
+	return
+}
+
+// OpenFileAsync will open a new file with flag and perm asynchronously
+func (a *AIO) OpenFileAsync(key string, flag int, perm os.FileMode) <-chan *OpenResp {
+	or := p.acquireOpenReq()
 	or.key = key
 	or.flag = flag
 	or.perm = perm
@@ -41,11 +52,10 @@ func (a *AIO) OpenFile(key string, flag int, perm os.FileMode) <-chan *OpenResp 
 
 // Delete will delete a file
 func (a *AIO) Delete(key string) <-chan error {
-	var dr deleteRequest
+	dr := p.acquireDelReq()
 	dr.key = key
-	dr.errCh = make(chan error, 1)
-	a.rq <- &dr
-	return dr.errCh
+	a.rq <- dr
+	return dr.resp
 }
 
 // OpenResp is a response for open requests
@@ -83,7 +93,7 @@ type writeRequest struct {
 }
 
 type closeRequest struct {
-	f *os.File
+	f *File
 
 	resp chan error
 }
@@ -91,18 +101,18 @@ type closeRequest struct {
 type deleteRequest struct {
 	key string
 
-	errCh chan error
+	resp chan error
 }
 
 type sema chan struct{}
 
-func newFile(r *openRequest, rq chan<- interface{}) (fp *File, err error) {
-	var f File
+func newFile(r *openRequest, rq chan<- interface{}) (f *File, err error) {
+	f = p.acquireFile()
 	if f.f, err = os.OpenFile(r.key, r.flag, r.perm); err != nil {
+		f = nil
 		return
 	}
 
 	f.rq = rq
-	fp = &f
 	return
 }

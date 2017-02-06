@@ -18,30 +18,22 @@ const (
 
 func TestBasic(t *testing.T) {
 	var (
-		f     *File
-		wf    *File
-		oresp *OpenResp
-	)
-
-	aio := New(2)
-
-	if oresp = <-aio.Open("./testing/helloWorld.txt"); oresp.Err != nil {
-		t.Fatal(oresp.Err)
-	}
-
-	f = oresp.F
-
-	if oresp = <-aio.OpenFile("./testing/testWrite.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); oresp.Err != nil {
-		t.Fatal(oresp.Err)
-	}
-
-	wf = oresp.F
-
-	var (
+		f   *File
+		wf  *File
 		buf [32]byte
 		n   int
 		err error
 	)
+
+	aio := New(2)
+
+	if f, err = aio.Open("./testing/helloWorld.txt"); err != nil {
+		t.Fatal(err)
+	}
+
+	if wf, err = aio.OpenFile("./testing/testWrite.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err != nil {
+		t.Fatal(err)
+	}
 
 	if n, err = f.Read(buf[:]); err != nil {
 		t.Fatal(err)
@@ -61,29 +53,36 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	or := <-ta.Open(testFilePath)
-	if or.Err != nil {
+	if err = f.Close(); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := io.Copy(testBuf, or.F); err != nil {
+	if f, err = ta.Open(testFilePath); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err = io.Copy(testBuf, f); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func BenchmarkAIO(b *testing.B) {
+	var (
+		f   *File
+		err error
+	)
+
 	for i := 0; i < b.N; i++ {
 		testBuf.Reset()
-		or := <-ta.Open(testFilePath)
-		if or.Err != nil {
-			b.Fatal(or.Err)
-		}
-
-		if _, err := io.Copy(testBuf, or.F); err != nil {
+		if f, err = ta.Open(testFilePath); err != nil {
 			b.Fatal(err)
 		}
 
-		if err := or.F.Close(); err != nil {
+		if _, err = io.Copy(testBuf, f); err != nil {
+			b.Fatal(err)
+		}
+
+		if err = f.Close(); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -92,18 +91,22 @@ func BenchmarkAIO(b *testing.B) {
 }
 
 func BenchmarkStdlib(b *testing.B) {
+	var (
+		f   *os.File
+		err error
+	)
+
 	for i := 0; i < b.N; i++ {
 		testBuf.Reset()
-		f, err := os.Open(testFilePath)
-		if err != nil {
+		if f, err = os.Open(testFilePath); err != nil {
 			b.Fatal(err)
 		}
 
-		if _, err := io.Copy(testBuf, f); err != nil {
+		if _, err = io.Copy(testBuf, f); err != nil {
 			b.Fatal(err)
 		}
 
-		if err := f.Close(); err != nil {
+		if err = f.Close(); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -116,16 +119,16 @@ func BenchmarkAIOPara(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		buf := bytes.NewBuffer(nil)
 		for pb.Next() {
-			or := <-ta.Open(testFilePath)
-			if or.Err != nil {
-				b.Fatal(or.Err)
-			}
-
-			if _, err := io.Copy(buf, or.F); err != nil {
+			f, err := ta.Open(testFilePath)
+			if err != nil {
 				b.Fatal(err)
 			}
 
-			if err := or.F.Close(); err != nil {
+			if _, err = io.Copy(buf, f); err != nil {
+				b.Fatal(err)
+			}
+
+			if err = f.Close(); err != nil {
 				b.Fatal(err)
 			}
 
@@ -146,11 +149,11 @@ func BenchmarkStdlibPara(b *testing.B) {
 				b.Fatal(err)
 			}
 
-			if _, err := io.Copy(buf, f); err != nil {
+			if _, err = io.Copy(buf, f); err != nil {
 				b.Fatal(err)
 			}
 
-			if err := f.Close(); err != nil {
+			if err = f.Close(); err != nil {
 				b.Fatal(err)
 			}
 
