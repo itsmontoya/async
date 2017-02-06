@@ -18,12 +18,15 @@ type File struct {
 // Read will read a file
 func (f *File) Read(b []byte) (n int, err error) {
 	rr := <-f.ReadAsync(b)
-	return rr.N, rr.Err
+	n = rr.N
+	err = rr.Err
+	p.releaseRWResp(rr)
+	return
 }
 
 // ReadAsync will read a file asynchronously
 func (f *File) ReadAsync(b []byte) <-chan *RWResp {
-	r := acquireReadRequest()
+	r := p.acquireReadReq()
 	r.b = b
 	r.f = f.f
 	f.rq <- r
@@ -46,20 +49,6 @@ func (f *File) WriteAsync(b []byte) <-chan *RWResp {
 	return r.resp
 }
 
-// Delete will delete a file
-func (f *File) Delete(key string) error {
-	return <-f.DeleteAsync(key)
-}
-
-// DeleteAsync will delete a file asynchronously
-func (f *File) DeleteAsync(key string) <-chan error {
-	var r deleteRequest
-	r.key = key
-	r.errCh = make(chan error)
-	f.rq <- &r
-	return r.errCh
-}
-
 // Close will close a file
 func (f *File) Close() error {
 	return <-f.CloseAsync()
@@ -67,16 +56,12 @@ func (f *File) Close() error {
 
 // CloseAsync will close a file asynchronously
 func (f *File) CloseAsync() <-chan error {
-	r := acquireCloseRequest()
+	r := p.acquireCloseReq()
 	if f.closed {
 		r.resp <- errors.ErrIsClosed
 	} else {
-		r.f = f.f
+		r.f = f
 		f.rq <- r
-
-		f.closed = true
-		f.rq = nil
-		f.f = nil
 	}
 
 	return r.resp
