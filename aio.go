@@ -6,6 +6,8 @@ import (
 	"runtime"
 )
 
+// Global pool for requests and responses
+// TODO: Decide if we want to bring the pools to the AIO-level, and give AIO's the ability to utilize their own pools
 var p = newPools()
 
 const (
