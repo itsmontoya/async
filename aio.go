@@ -9,6 +9,8 @@ import (
 var p = newPools()
 
 const (
+	// WarningInvalidNumThreads is logged when the number of threads are negativ
+	WarningInvalidNumThreads = "WARNING: the number of I/O threads is less than 1, setting to 1"
 	// WarningTooManyNumThreads is logged when the number of threads specified in New are too much for the current system
 	WarningTooManyNumThreads = "WARNING: the number of I/O threads matches or exceeds the number of CPUs"
 )
@@ -21,11 +23,14 @@ func New(numThreads int) *AIO {
 	}
 
 	if numThreads < 1 {
+		// Log invalid numThreads warning
+		log.Println(WarningInvalidNumThreads)
 		// numThreads is an invalid value, set to 1
 		numThreads = 1
 	}
 
 	if numThreads >= runtime.NumCPU() {
+		// Log too many numThreads warning
 		log.Println(WarningTooManyNumThreads)
 	}
 
