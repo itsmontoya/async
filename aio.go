@@ -1,9 +1,6 @@
 package aio
 
-import (
-	"os"
-	//	"github.com/missionMeteora/toolkit/errors"
-)
+import "os"
 
 var p = newPools()
 
@@ -11,6 +8,10 @@ var p = newPools()
 func New(numThreads int) *AIO {
 	a := AIO{
 		rq: make(chan interface{}, 1024*32),
+	}
+
+	if numThreads < 1 {
+		numThreads = 1
 	}
 
 	for i := 0; i < numThreads; i++ {
@@ -56,63 +57,4 @@ func (a *AIO) Delete(key string) <-chan error {
 	dr.key = key
 	a.rq <- dr
 	return dr.resp
-}
-
-// OpenResp is a response for open requests
-type OpenResp struct {
-	F   *File
-	Err error
-}
-
-// RWResp is a response for read/write requests
-type RWResp struct {
-	N   int
-	Err error
-}
-
-type openRequest struct {
-	key  string
-	flag int
-	perm os.FileMode
-
-	resp chan *OpenResp
-}
-
-type readRequest struct {
-	f *os.File
-	b []byte
-
-	resp chan *RWResp
-}
-
-type writeRequest struct {
-	f *os.File
-	b []byte
-
-	resp chan *RWResp
-}
-
-type closeRequest struct {
-	f *File
-
-	resp chan error
-}
-
-type deleteRequest struct {
-	key string
-
-	resp chan error
-}
-
-type sema chan struct{}
-
-func newFile(r *openRequest, rq chan<- interface{}) (f *File, err error) {
-	f = p.acquireFile()
-	if f.f, err = os.OpenFile(r.key, r.flag, r.perm); err != nil {
-		f = nil
-		return
-	}
-
-	f.rq = rq
-	return
 }
