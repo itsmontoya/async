@@ -1,5 +1,7 @@
 package aio
 
+import "os"
+
 func newOpenReq() *openRequest {
 	return &openRequest{
 		resp: make(chan *OpenResp),

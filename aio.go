@@ -1,17 +1,32 @@
 package aio
 
-import "os"
+import (
+	"log"
+	"os"
+	"runtime"
+)
 
 var p = newPools()
 
-// New returns a new AIO
+const (
+	// WarningTooManyNumThreads is logged when the number of threads specified in New are too much for the current system
+	WarningTooManyNumThreads = "WARNING: the number of I/O threads matches or exceeds the number of CPUs"
+)
+
+// New returns a new asynchronous I/O manager
 func New(numThreads int) *AIO {
 	a := AIO{
+		// Create request queue
 		rq: make(chan interface{}, 1024*32),
 	}
 
 	if numThreads < 1 {
+		// numThreads is an invalid value, set to 1
 		numThreads = 1
+	}
+
+	if numThreads >= runtime.NumCPU() {
+		log.Println(WarningTooManyNumThreads)
 	}
 
 	for i := 0; i < numThreads; i++ {
