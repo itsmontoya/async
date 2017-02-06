@@ -6,16 +6,16 @@ import (
 )
 
 // New returns a new AIO
-func New() *AIO {
+func New(numThreads int) *AIO {
 	a := AIO{
 		rq: make(chan interface{}, 1024),
 	}
 
-	t := newThread(a.rq)
-	go t.listen()
+	for i := 0; i < numThreads; i++ {
+		t := newThread(a.rq)
+		go t.listen()
+	}
 
-	t = newThread(a.rq)
-	go t.listen()
 	return &a
 }
 

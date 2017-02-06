@@ -10,7 +10,7 @@ import (
 
 func main() {
 	s := &srv{
-		aio: aio.New(),
+		aio: aio.New(2),
 	}
 
 	r := httprouter.New()
@@ -24,31 +24,31 @@ type srv struct {
 }
 
 func (s *srv) handleA(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	or := <-s.aio.Open("../testing/declarationOfIndependence.txt")
+	or := <-s.aio.Open("../../testing/declarationOfIndependence.txt")
 	if or.Err != nil {
-		panic(or.Err)
+		return
 	}
 
 	if _, err := io.Copy(w, or.F); err != nil {
-		panic(err)
+		return
 	}
 
 	if err := or.F.Close(); err != nil {
-		panic(err)
+		return
 	}
 }
 
 func (s *srv) handleB(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	f, err := os.Open("../testing/declarationOfIndependence.txt")
+	f, err := os.Open("../../testing/declarationOfIndependence.txt")
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	if _, err := io.Copy(w, f); err != nil {
-		panic(err)
+		return
 	}
 
 	if err := f.Close(); err != nil {
-		panic(err)
+		return
 	}
 }
