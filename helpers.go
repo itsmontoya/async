@@ -42,6 +42,33 @@ type writeRequest struct {
 	resp chan *RWResp
 }
 
+func newSeekReq() *seekRequest {
+	return &seekRequest{
+		resp: make(chan *SeekResp),
+	}
+}
+
+type seekRequest struct {
+	f *os.File
+
+	offset int64
+	whence int
+
+	resp chan *SeekResp
+}
+
+func newSyncRequest() *syncRequest {
+	return &syncRequest{
+		resp: make(chan error),
+	}
+}
+
+type syncRequest struct {
+	f *os.File
+
+	resp chan error
+}
+
 func newCloseReq() *closeRequest {
 	return &closeRequest{
 		resp: make(chan error),
@@ -83,5 +110,15 @@ func newRWResp() *RWResp {
 // RWResp is a response for read/write requests
 type RWResp struct {
 	N   int
+	Err error
+}
+
+func newSeekResp() *SeekResp {
+	return &SeekResp{}
+}
+
+// SeekResp is the response for seek requests
+type SeekResp struct {
+	Ret int64
 	Err error
 }
