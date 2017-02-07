@@ -55,6 +55,19 @@ func (t *thread) write(r *writeRequest) {
 	resp := p.acquireRWResp()
 	resp.N, resp.Err = r.f.Write(r.b)
 	r.resp <- resp
+	p.releaseWriteReq(r)
+}
+
+func (t *thread) seek(r *seekRequest) {
+	resp := p.acquireSeekResp()
+	resp.Ret, resp.Err = r.f.Seek(r.offset, r.whence)
+	r.resp <- resp
+	p.releaseSeekReq(r)
+}
+
+func (t *thread) sync(r *syncRequest) {
+	r.resp <- r.f.Sync()
+	p.releaseSyncReq(r)
 }
 
 func (t *thread) close(r *closeRequest) {
@@ -65,4 +78,5 @@ func (t *thread) close(r *closeRequest) {
 
 func (t *thread) delete(r *deleteRequest) {
 	r.resp <- os.Remove(r.key)
+	p.releaseDelReq(r)
 }

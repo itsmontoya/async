@@ -76,7 +76,51 @@ func (f *File) WriteAsync(b []byte) <-chan *RWResp {
 	r.f = f.f
 
 	// Send request to request queue
-	f.rq <- &r
+	f.rq <- r
+	return r.resp
+}
+
+// Seek will seek within a file
+func (f *File) Seek(offset int64, whence int) (ret int64, err error) {
+	// Seek and wait for response
+	rr := <-f.SeekAsync(offset, whence)
+
+	ret = rr.Ret
+	err = rr.Err
+
+	// Release response back to the pool
+	p.releaseSeekResp(rr)
+	return
+}
+
+// SeekAsync will seek within a file asynchronously
+func (f *File) SeekAsync(offset int64, whence int) <-chan *SeekResp {
+	// Acquire seek request from pool
+	r := p.acquireSeekReq()
+
+	r.offset = offset
+	r.whence = whence
+
+	// Send request to request queue
+	f.rq <- r
+	return r.resp
+}
+
+// Sync will sync a file
+func (f *File) Sync() (err error) {
+	// Sync and wait for response
+	return <-f.SyncAsync()
+}
+
+// SyncAsync will sync a file asynchronously
+func (f *File) SyncAsync() <-chan error {
+	// Acquire seek request from pool
+	r := p.acquireSyncReq()
+
+	r.f = f.f
+
+	// Send request to request queue
+	f.rq <- r
 	return r.resp
 }
 
