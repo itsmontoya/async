@@ -11,7 +11,7 @@ import (
 var p = newPools()
 
 const (
-	// WarningInvalidNumThreads is logged when the number of threads are negativ
+	// WarningInvalidNumThreads is logged when the number of threads are less than one
 	WarningInvalidNumThreads = "WARNING: the number of I/O threads is less than 1, setting to 1"
 	// WarningTooManyNumThreads is logged when the number of threads specified in New are too much for the current system
 	WarningTooManyNumThreads = "WARNING: the number of I/O threads matches or exceeds the number of CPUs"
