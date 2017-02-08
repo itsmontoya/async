@@ -24,10 +24,14 @@ func (t *thread) listen() {
 			t.read(r)
 		case *writeRequest:
 			t.write(r)
-		case *deleteRequest:
-			t.delete(r)
+		case *seekRequest:
+			t.seek(r)
+		case *syncRequest:
+			t.sync(r)
 		case *closeRequest:
 			t.close(r)
+		case *deleteRequest:
+			t.delete(r)
 
 		default:
 			panic("invalid type")

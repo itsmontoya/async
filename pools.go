@@ -22,6 +22,10 @@ func newPools() *pools {
 		return newSeekReq()
 	}
 
+	p.syncReqs.New = func() interface{} {
+		return newSyncReq()
+	}
+
 	p.closeReqs.New = func() interface{} {
 		return newCloseReq()
 	}
@@ -215,7 +219,7 @@ func (p *pools) releaseRWResp(resp *RWResp) {
 func (p *pools) releaseSeekResp(resp *SeekResp) {
 	resp.Ret = 0
 	resp.Err = nil
-	p.rwResps.Put(resp)
+	p.seekResps.Put(resp)
 }
 
 func (p *pools) releaseFile(f *File) {

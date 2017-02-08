@@ -57,7 +57,7 @@ type seekRequest struct {
 	resp chan *SeekResp
 }
 
-func newSyncRequest() *syncRequest {
+func newSyncReq() *syncRequest {
 	return &syncRequest{
 		resp: make(chan error),
 	}
