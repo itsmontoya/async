@@ -98,6 +98,7 @@ func (f *File) SeekAsync(offset int64, whence int) <-chan *SeekResp {
 	// Acquire seek request from pool
 	r := p.acquireSeekReq()
 
+	r.f = f.f
 	r.offset = offset
 	r.whence = whence
 
