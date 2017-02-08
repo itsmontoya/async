@@ -5,19 +5,48 @@ AIO is an asynchronous io-manager in pure-go
 ## Benchmarks
 ```bash
 ## Go 1.7.4
-# AIO Running wrk -c 20 http://172.16.0.201:1337/a
+# AIO Running wrk -c 20 -d 30s http://172.16.0.201:1337/a
+Running 30s test @ http://localhost:1337/a
+  2 threads and 20 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency   528.99us  359.63us  10.98ms   91.99%
-    Req/Sec    19.86k     0.95k   22.17k    77.72%
-  398809 requests in 10.10s, 3.50GB read
-Requests/sec:  39488.34
-Transfer/sec:    354.83MB
+    Latency   312.41us  361.29us  12.76ms   95.14%
+    Req/Sec    34.89k     2.15k   55.53k    89.68%
+  2086354 requests in 30.10s, 18.31GB read
+Requests/sec:  69315.13
+Transfer/sec:    622.83MB
 
-# Stdlib Running wrk -c 20 http://172.16.0.201:1337/a
+# Stdlib Running wrk -c 20 -d 30s http://172.16.0.201:1337/a
+Running 30s test @ http://localhost:1337/b
+  2 threads and 20 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency   801.86us  476.24us   6.19ms   76.31%
-    Req/Sec    12.82k   648.63    13.77k    85.64%
-  257670 requests in 10.10s, 2.26GB read
-Requests/sec:  25513.25
-Transfer/sec:    229.42MB
+    Latency   796.00us  812.12us  24.89ms   91.27%
+    Req/Sec    14.36k     1.47k   17.39k    73.33%
+  857224 requests in 30.01s, 7.53GB read
+Requests/sec:  28567.70
+Transfer/sec:    256.89MB
+
+
+
+## Go 1.8 rc3
+# AIO Running wrk -c 20 -d 30s http://172.16.0.201:1337/a
+Running 30s test @ http://localhost:1337/a
+  2 threads and 20 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   312.75us  361.67us  12.26ms   95.09%
+    Req/Sec    34.93k     1.37k   38.34k    76.33%
+  2085260 requests in 30.01s, 18.30GB read
+Requests/sec:  69493.89
+Transfer/sec:    624.44MB
+
+# Stdlib Running wrk -c 20 -d 30s http://172.16.0.201:1337/a
+Running 30s test @ http://localhost:1337/b
+  2 threads and 20 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   776.42us  781.30us  20.42ms   91.58%
+    Req/Sec    14.53k     1.37k   16.96k    77.67%
+  867577 requests in 30.01s, 7.62GB read
+Requests/sec:  28908.86
+Transfer/sec:    259.95MB
+
 ```
+
