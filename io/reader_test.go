@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestBasic(t *testing.T) {
+func TestReader(t *testing.T) {
 	var (
 		f   *os.File
 		err error
