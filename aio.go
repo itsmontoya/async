@@ -71,15 +71,29 @@ func (a *AIO) openThreads(n int) {
 }
 
 func (a *AIO) closeThreads(n int) {
-	if n > len(a.ts) {
-		n = len(a.ts)
+	if n < 1 {
+		// Log invalid numThreads warning
+		log.Println(WarningInvalidNumThreads)
+		return
+	}
+
+	var i int
+	if i = len(a.ts) - 1; n > i {
+		n = i
 	}
 
 	a.mux.Lock()
-	for ; n > 0; n-- {
-		th := a.ts[0]
+	for {
+		th := a.ts[i]
 		th.Close()
-		popThread(a.ts, 0)
+		a.ts = a.ts[:i]
+
+		if n == 0 {
+			break
+		}
+
+		n--
+		i--
 	}
 	a.mux.Unlock()
 }
