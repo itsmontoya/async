@@ -5,15 +5,15 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/itsmontoya/async"
+	"github.com/itsmontoya/async/file"
 	"github.com/julienschmidt/httprouter"
 	"github.com/valyala/fasthttp"
 )
 
+const fileLoc = "../../testing/declarationOfIndependence.txt"
+
 func main() {
-	s := &srv{
-		a: async.New(2),
-	}
+	s := &srv{}
 
 	go func() {
 		r := httprouter.New()
@@ -30,11 +30,10 @@ func main() {
 }
 
 type srv struct {
-	a *async.Async
 }
 
 func (s *srv) handleA(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	f, err := s.a.Open("../../testing/declarationOfIndependence.txt")
+	f, err := file.Open(fileLoc)
 	if err != nil {
 		return
 	}
@@ -49,7 +48,7 @@ func (s *srv) handleA(w http.ResponseWriter, r *http.Request, p httprouter.Param
 }
 
 func (s *srv) handleB(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	f, err := os.Open("../../testing/declarationOfIndependence.txt")
+	f, err := os.Open(fileLoc)
 	if err != nil {
 		return
 	}
@@ -64,7 +63,7 @@ func (s *srv) handleB(w http.ResponseWriter, r *http.Request, p httprouter.Param
 }
 
 func (s *srv) handleC(ctx *fasthttp.RequestCtx) {
-	f, err := s.a.Open("../../testing/declarationOfIndependence.txt")
+	f, err := file.Open(fileLoc)
 	if err != nil {
 		return
 	}
