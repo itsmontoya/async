@@ -1,19 +1,19 @@
-package aio
+package file
 
 import (
-	"fmt"
-	//	"os"
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"testing"
 )
 
-var ta = New(2)
 var testBuf = bytes.NewBuffer(nil)
 
 const (
-	testFilePath = "./testing/declarationOfIndependence.txt"
+	testFilePath   = "../testing/declarationOfIndependence.txt"
+	testHelloWorld = "../testing/helloWorld.txt"
+	testWrite      = "../testing/testWrite.txt"
 )
 
 func TestBasic(t *testing.T) {
@@ -25,13 +25,11 @@ func TestBasic(t *testing.T) {
 		err error
 	)
 
-	aio := New(2)
-
-	if f, err = aio.Open("./testing/helloWorld.txt"); err != nil {
+	if f, err = Open(testHelloWorld); err != nil {
 		t.Fatal(err)
 	}
 
-	if wf, err = aio.OpenFile("./testing/testWrite.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err != nil {
+	if wf, err = OpenFile(testWrite, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -49,7 +47,7 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = <-aio.Delete("./testing/testWrite.txt"); err != nil {
+	if err = <-Delete(testWrite); err != nil {
 		t.Fatal(err)
 	}
 
@@ -57,7 +55,7 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if f, err = ta.Open(testFilePath); err != nil {
+	if f, err = Open(testFilePath); err != nil {
 		t.Fatal(err)
 	}
 
@@ -74,7 +72,7 @@ func BenchmarkAIO(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		testBuf.Reset()
-		if f, err = ta.Open(testFilePath); err != nil {
+		if f, err = Open(testFilePath); err != nil {
 			b.Fatal(err)
 		}
 
@@ -119,7 +117,7 @@ func BenchmarkAIOPara(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		buf := bytes.NewBuffer(nil)
 		for pb.Next() {
-			f, err := ta.Open(testFilePath)
+			f, err := Open(testFilePath)
 			if err != nil {
 				b.Fatal(err)
 			}

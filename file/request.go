@@ -1,6 +1,10 @@
-package aio
+package file
 
-import "os"
+import (
+	"os"
+
+	"github.com/itsmontoya/aio"
+)
 
 func newOpenReq() *openRequest {
 	return &openRequest{
@@ -13,7 +17,15 @@ type openRequest struct {
 	flag int
 	perm os.FileMode
 
+	qfn  func(aio.Actioner)
 	resp chan *OpenResp
+}
+
+func (req *openRequest) Action() {
+	resp := p.acquireOpenResp()
+	resp.F, resp.Err = newFile(req)
+	req.resp <- resp
+	p.releaseOpenReq(req)
 }
 
 func newReadReq() *readRequest {
@@ -29,6 +41,13 @@ type readRequest struct {
 	resp chan *RWResp
 }
 
+func (req *readRequest) Action() {
+	resp := p.acquireRWResp()
+	resp.N, resp.Err = req.f.Read(req.b)
+	req.resp <- resp
+	p.releaseReadReq(req)
+}
+
 func newWriteReq() *writeRequest {
 	return &writeRequest{
 		resp: make(chan *RWResp),
@@ -40,6 +59,13 @@ type writeRequest struct {
 	b []byte
 
 	resp chan *RWResp
+}
+
+func (req *writeRequest) Action() {
+	resp := p.acquireRWResp()
+	resp.N, resp.Err = req.f.Write(req.b)
+	req.resp <- resp
+	p.releaseWriteReq(req)
 }
 
 func newSeekReq() *seekRequest {
@@ -57,6 +83,13 @@ type seekRequest struct {
 	resp chan *SeekResp
 }
 
+func (req *seekRequest) Action() {
+	resp := p.acquireSeekResp()
+	resp.Ret, resp.Err = req.f.Seek(req.offset, req.whence)
+	req.resp <- resp
+	p.releaseSeekReq(req)
+}
+
 func newSyncReq() *syncRequest {
 	return &syncRequest{
 		resp: make(chan error),
@@ -67,6 +100,11 @@ type syncRequest struct {
 	f *os.File
 
 	resp chan error
+}
+
+func (req *syncRequest) Action() {
+	req.resp <- req.f.Sync()
+	p.releaseSyncReq(req)
 }
 
 func newCloseReq() *closeRequest {
@@ -81,6 +119,12 @@ type closeRequest struct {
 	resp chan error
 }
 
+func (req *closeRequest) Action() {
+	req.resp <- req.f.f.Close()
+	p.releaseFile(req.f)
+	p.releaseCloseReq(req)
+}
+
 func newDelReq() *deleteRequest {
 	return &deleteRequest{
 		resp: make(chan error),
@@ -93,32 +137,7 @@ type deleteRequest struct {
 	resp chan error
 }
 
-func newOpenResp() *OpenResp {
-	return &OpenResp{}
-}
-
-// OpenResp is a response for open requests
-type OpenResp struct {
-	F   *File
-	Err error
-}
-
-func newRWResp() *RWResp {
-	return &RWResp{}
-}
-
-// RWResp is a response for read/write requests
-type RWResp struct {
-	N   int
-	Err error
-}
-
-func newSeekResp() *SeekResp {
-	return &SeekResp{}
-}
-
-// SeekResp is the response for seek requests
-type SeekResp struct {
-	Ret int64
-	Err error
+func (req *deleteRequest) Action() {
+	req.resp <- os.Remove(req.key)
+	p.releaseDelReq(req)
 }

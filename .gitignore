@@ -1,4 +1,4 @@
-*.txt
+./*.txt
 *.pdf
 *.pprof
 *.test

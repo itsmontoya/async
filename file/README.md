@@ -1,11 +1,11 @@
-## AIO [![GoDoc](https://godoc.org/github.com/itsmontoya/aio?status.svg)](https://godoc.org/github.com/itsmontoya/aop) ![Status](https://img.shields.io/badge/status-beta-yellow.svg)
+## file [![GoDoc](https://godoc.org/github.com/itsmontoya/aio/file?status.svg)](https://godoc.org/github.com/itsmontoya/aio/file) ![Status](https://img.shields.io/badge/status-beta-yellow.svg)
 
-AIO is an asynchronous request manager in pure-go
+File is an asynchronous wrapper for the standard library's os.File. File utilizes AIO under the hood to manage the asynchronous requests
 
 ## Benchmarks
 ```bash
 ## Go 1.7.4
-# File (built on AIO) Running wrk -c 20 -d 30s http://172.16.0.201:1337/a
+# File Running wrk -c 20 -d 30s http://172.16.0.201:1337/a
 Running 30s test @ http://localhost:1337/a
   2 threads and 20 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -28,7 +28,7 @@ Transfer/sec:    256.89MB
 
 
 ## Go 1.8 rc3
-# File (built on AIO) Running wrk -c 20 -d 30s http://172.16.0.201:1337/a
+# File Running wrk -c 20 -d 30s http://172.16.0.201:1337/a
 Running 30s test @ http://localhost:1337/a
   2 threads and 20 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
