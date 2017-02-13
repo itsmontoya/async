@@ -7,6 +7,8 @@ import (
 )
 
 // Copy will copy
+// Note: This should be used only with disk to disk copying (or at least syscall reader to syscall writer)
+// If only one of the args is syscall-blocking, use the Reader or Writer wrapper for that particular item
 func Copy(dst io.Writer, src io.Reader) (n int64, err error) {
 	resp := <-CopyAsync(dst, src)
 	n = resp.N
