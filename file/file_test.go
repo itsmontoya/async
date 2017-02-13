@@ -11,7 +11,9 @@ import (
 var testBuf = bytes.NewBuffer(nil)
 
 const (
-	testFilePath = "./testing/declarationOfIndependence.txt"
+	testFilePath   = "../testing/declarationOfIndependence.txt"
+	testHelloWorld = "../testing/helloWorld.txt"
+	testWrite      = "../testing/testWrite.txt"
 )
 
 func TestBasic(t *testing.T) {
@@ -23,11 +25,11 @@ func TestBasic(t *testing.T) {
 		err error
 	)
 
-	if f, err = Open("./testing/helloWorld.txt"); err != nil {
+	if f, err = Open(testHelloWorld); err != nil {
 		t.Fatal(err)
 	}
 
-	if wf, err = OpenFile("./testing/testWrite.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err != nil {
+	if wf, err = OpenFile(testWrite, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -45,7 +47,7 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = <-Delete("./testing/testWrite.txt"); err != nil {
+	if err = <-Delete(testWrite); err != nil {
 		t.Fatal(err)
 	}
 
