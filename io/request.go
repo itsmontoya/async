@@ -16,7 +16,7 @@ type readRequest struct {
 }
 
 func (req *readRequest) Action() {
-	resp := newRWResp()
+	resp := p.acquireRWResp()
 	resp.N, resp.Err = req.r.Read(req.b)
 	req.resp <- resp
 	p.releaseReadReq(req)
@@ -36,7 +36,7 @@ type writeRequest struct {
 }
 
 func (req *writeRequest) Action() {
-	resp := newRWResp()
+	resp := p.acquireRWResp()
 	resp.N, resp.Err = req.w.Write(req.b)
 	req.resp <- resp
 	p.releaseWriteReq(req)
@@ -74,7 +74,7 @@ type copyRequest struct {
 }
 
 func (req *copyRequest) Action() {
-	resp := newCopyResp()
+	resp := p.acquireCopyResp()
 	resp.N, resp.Err = io.Copy(req.w, req.r)
 	req.resp <- resp
 	p.releaseCopyReq(req)
