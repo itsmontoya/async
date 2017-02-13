@@ -3,6 +3,7 @@ package aio
 import (
 	"log"
 	"runtime"
+	"sync"
 )
 
 const (
@@ -12,39 +13,23 @@ const (
 	WarningTooManyNumThreads = "WARNING: the number of I/O threads matches or exceeds the number of CPUs"
 )
 
-var aio = New(1)
+var aio = New(1, 1024*32)
 
 // New returns a new asynchronous I/O manager
-func New(numThreads int) *AIO {
+func New(numThreads, queueLen int) *AIO {
 	a := AIO{
 		// Create request queue
-		rq: make(chan Actioner, 1024*32),
+		rq: make(chan Actioner, queueLen),
 	}
 
-	if numThreads < 1 {
-		// Log invalid numThreads warning
-		log.Println(WarningInvalidNumThreads)
-		// numThreads is an invalid value, set to 1
-		numThreads = 1
-	}
-
-	if numThreads >= runtime.NumCPU() {
-		// Log too many numThreads warning
-		log.Println(WarningTooManyNumThreads)
-	}
-
-	for i := 0; i < numThreads; i++ {
-		// Create new thread
-		t := newThread(a.rq)
-		// Call thread.listen within a new goroutine
-		go t.listen()
-	}
-
+	a.Set(numThreads)
 	return &a
 }
 
 // AIO does stuff
 type AIO struct {
+	mux sync.Mutex
+
 	rq chan Actioner
 	ts []*thread
 }
@@ -74,13 +59,15 @@ func (a *AIO) openThreads(n int) {
 		return
 	}
 
+	a.mux.Lock()
 	for i := 0; i < n; i++ {
 		// Create new thread
 		th := newThread(a.rq)
+		a.ts = append(a.ts, th)
 		// Call thread.listen within a new goroutine
 		go th.listen()
 	}
-
+	a.mux.Unlock()
 }
 
 func (a *AIO) closeThreads(n int) {
@@ -88,11 +75,13 @@ func (a *AIO) closeThreads(n int) {
 		n = len(a.ts)
 	}
 
+	a.mux.Lock()
 	for ; n > 0; n-- {
 		th := a.ts[0]
 		th.Close()
 		popThread(a.ts, 0)
 	}
+	a.mux.Unlock()
 }
 
 // Queue will add an item to the request queue
