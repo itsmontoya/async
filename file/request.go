@@ -3,7 +3,7 @@ package file
 import (
 	"os"
 
-	"github.com/itsmontoya/aio"
+	"github.com/itsmontoya/async"
 )
 
 func newOpenReq() *openRequest {
@@ -17,7 +17,7 @@ type openRequest struct {
 	flag int
 	perm os.FileMode
 
-	qfn  func(aio.Actioner)
+	qfn  async.QueueFn
 	resp chan *OpenResp
 }
 

@@ -1,4 +1,4 @@
-## file [![GoDoc](https://godoc.org/github.com/itsmontoya/aio/file?status.svg)](https://godoc.org/github.com/itsmontoya/aio/file) ![Status](https://img.shields.io/badge/status-beta-yellow.svg)
+## file [![GoDoc](https://godoc.org/github.com/itsmontoya/async/file?status.svg)](https://godoc.org/github.com/itsmontoya/async/file) ![Status](https://img.shields.io/badge/status-beta-yellow.svg)
 
 File is an asynchronous wrapper for the standard library's os.File. File utilizes AIO under the hood to manage the asynchronous requests
 

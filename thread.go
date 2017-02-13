@@ -1,4 +1,4 @@
-package aio
+package async
 
 import (
 	"runtime"

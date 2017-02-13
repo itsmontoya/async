@@ -5,14 +5,14 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/itsmontoya/aio"
+	"github.com/itsmontoya/async"
 	"github.com/julienschmidt/httprouter"
 	"github.com/valyala/fasthttp"
 )
 
 func main() {
 	s := &srv{
-		aio: aio.New(2),
+		a: async.New(2),
 	}
 
 	go func() {
@@ -30,11 +30,11 @@ func main() {
 }
 
 type srv struct {
-	aio *aio.AIO
+	a *async.Async
 }
 
 func (s *srv) handleA(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	f, err := s.aio.Open("../../testing/declarationOfIndependence.txt")
+	f, err := s.a.Open("../../testing/declarationOfIndependence.txt")
 	if err != nil {
 		return
 	}
@@ -64,7 +64,7 @@ func (s *srv) handleB(w http.ResponseWriter, r *http.Request, p httprouter.Param
 }
 
 func (s *srv) handleC(ctx *fasthttp.RequestCtx) {
-	f, err := s.aio.Open("../../testing/declarationOfIndependence.txt")
+	f, err := s.a.Open("../../testing/declarationOfIndependence.txt")
 	if err != nil {
 		return
 	}

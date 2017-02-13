@@ -3,7 +3,7 @@ package io
 import (
 	"io"
 
-	"github.com/itsmontoya/aio"
+	"github.com/itsmontoya/async"
 )
 
 func read(r io.Reader, b []byte) (n int, err error) {
@@ -23,7 +23,7 @@ func readAsync(r io.Reader, b []byte) <-chan *RWResp {
 	req.b = b
 
 	// Send request to queue
-	aio.Queue(req)
+	async.Queue(req)
 	return req.resp
 }
 
@@ -44,7 +44,7 @@ func writeAsync(w io.Writer, b []byte) <-chan *RWResp {
 	req.b = b
 
 	// Send request to queue
-	aio.Queue(req)
+	async.Queue(req)
 	return req.resp
 }
 
@@ -60,6 +60,6 @@ func closeAsync(c io.Closer) <-chan error {
 	req.c = c
 
 	// Send request to queue
-	aio.Queue(req)
+	async.Queue(req)
 	return req.resp
 }

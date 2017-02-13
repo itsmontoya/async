@@ -3,16 +3,16 @@ package file
 import (
 	"os"
 
-	"github.com/itsmontoya/aio"
+	"github.com/itsmontoya/async"
 )
 
 var mngr = New(nil)
 
 // New will return a new manager
-func New(a *aio.AIO) *Manager {
+func New(a *async.Async) *Manager {
 	var m Manager
 	if a == nil {
-		m.qfn = aio.Queue
+		m.qfn = async.Queue
 	} else {
 		m.qfn = a.Queue
 	}
@@ -22,7 +22,7 @@ func New(a *aio.AIO) *Manager {
 
 // Manager will manage files
 type Manager struct {
-	qfn func(aio.Actioner)
+	qfn async.QueueFn
 }
 
 // Open will open a new file for reading

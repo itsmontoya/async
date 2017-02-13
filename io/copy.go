@@ -3,7 +3,7 @@ package io
 import (
 	"io"
 
-	"github.com/itsmontoya/aio"
+	"github.com/itsmontoya/async"
 )
 
 // Copy will copy
@@ -25,6 +25,6 @@ func CopyAsync(dst io.Writer, src io.Reader) <-chan *CopyResp {
 	req.r = src
 
 	// Send request to queue
-	aio.Queue(req)
+	async.Queue(req)
 	return req.resp
 }

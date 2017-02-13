@@ -3,7 +3,7 @@ package file
 import (
 	"os"
 
-	"github.com/itsmontoya/aio"
+	"github.com/itsmontoya/async"
 	"github.com/missionMeteora/toolkit/errors"
 )
 
@@ -16,7 +16,7 @@ func newFile(req *openRequest) (f *File, err error) {
 		return
 	}
 
-	// Set file's internal aio
+	// Set file's internal queue func
 	f.qfn = req.qfn
 	return
 }
@@ -25,7 +25,7 @@ func newFile(req *openRequest) (f *File, err error) {
 type File struct {
 	f *os.File
 	// Reference AIO instance
-	qfn func(aio.Actioner)
+	qfn async.QueueFn
 	// Closed state
 	closed bool
 }
