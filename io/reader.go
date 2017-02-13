@@ -30,7 +30,7 @@ func NewReadCloser(rc io.ReadCloser) *ReadCloser {
 
 // ReadCloser is an asynchronous wrapper for an io.ReadCloser
 type ReadCloser struct {
-	// Internal reader
+	// Internal read closer
 	rc io.ReadCloser
 }
 
