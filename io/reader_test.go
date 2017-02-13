@@ -14,7 +14,7 @@ func TestReader(t *testing.T) {
 		err error
 	)
 
-	if f, err = os.Open("../file/testing/helloWorld.txt"); err != nil {
+	if f, err = os.Open("../testing/helloWorld.txt"); err != nil {
 		t.Fatal(err)
 	}
 
