@@ -119,3 +119,6 @@ func Queue(req Actioner) {
 func popThread(ts []*thread, n int) []*thread {
 	return append(ts[:n], ts[n+1:]...)
 }
+
+// QueueFn is a queue function for sending requests
+type QueueFn func(req Actioner)
