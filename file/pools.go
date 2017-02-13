@@ -229,6 +229,6 @@ func (p *pools) releaseSeekResp(resp *SeekResp) {
 func (p *pools) releaseFile(f *File) {
 	f.f = nil
 	f.closed = false
-	f.a = nil
+	f.qfn = nil
 	p.files.Put(f)
 }

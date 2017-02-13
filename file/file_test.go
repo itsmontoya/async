@@ -6,11 +6,8 @@ import (
 	"io"
 	"os"
 	"testing"
-
-	"github.com/itsmontoya/aio"
 )
 
-var tmng = New(aio.New(2))
 var testBuf = bytes.NewBuffer(nil)
 
 const (
@@ -26,11 +23,11 @@ func TestBasic(t *testing.T) {
 		err error
 	)
 
-	if f, err = tmng.Open("./testing/helloWorld.txt"); err != nil {
+	if f, err = Open("./testing/helloWorld.txt"); err != nil {
 		t.Fatal(err)
 	}
 
-	if wf, err = tmng.OpenFile("./testing/testWrite.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err != nil {
+	if wf, err = OpenFile("./testing/testWrite.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -48,7 +45,7 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = <-tmng.Delete("./testing/testWrite.txt"); err != nil {
+	if err = <-Delete("./testing/testWrite.txt"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -56,7 +53,7 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if f, err = tmng.Open(testFilePath); err != nil {
+	if f, err = Open(testFilePath); err != nil {
 		t.Fatal(err)
 	}
 
@@ -73,7 +70,7 @@ func BenchmarkAIO(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		testBuf.Reset()
-		if f, err = tmng.Open(testFilePath); err != nil {
+		if f, err = Open(testFilePath); err != nil {
 			b.Fatal(err)
 		}
 
@@ -118,7 +115,7 @@ func BenchmarkAIOPara(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		buf := bytes.NewBuffer(nil)
 		for pb.Next() {
-			f, err := tmng.Open(testFilePath)
+			f, err := Open(testFilePath)
 			if err != nil {
 				b.Fatal(err)
 			}

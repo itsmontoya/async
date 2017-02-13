@@ -6,14 +6,23 @@ import (
 	"github.com/itsmontoya/aio"
 )
 
+var mngr = New(nil)
+
 // New will return a new manager
 func New(a *aio.AIO) *Manager {
-	return &Manager{a}
+	var m Manager
+	if a == nil {
+		m.qfn = aio.Queue
+	} else {
+		m.qfn = a.Queue
+	}
+
+	return &m
 }
 
 // Manager will manage files
 type Manager struct {
-	a *aio.AIO
+	qfn func(aio.Actioner)
 }
 
 // Open will open a new file for reading
@@ -44,10 +53,10 @@ func (m *Manager) OpenFileAsync(key string, flag int, perm os.FileMode) <-chan *
 	req.key = key
 	req.flag = flag
 	req.perm = perm
-	req.a = m.a
+	req.qfn = m.qfn
 
 	// Send request to queue
-	m.a.Queue(req)
+	m.qfn(req)
 	return req.resp
 }
 
@@ -60,6 +69,26 @@ func (m *Manager) Delete(key string) <-chan error {
 	req.key = key
 
 	// Send request to queue
-	m.a.Queue(req)
+	m.qfn(req)
 	return req.resp
+}
+
+// Open is the exported Open func for the global Manager
+func Open(key string) (f *File, err error) {
+	return mngr.Open(key)
+}
+
+// OpenFile is the exported OpenFile func for the global Manager
+func OpenFile(key string, flag int, perm os.FileMode) (f *File, err error) {
+	return mngr.OpenFile(key, flag, perm)
+}
+
+// OpenFileAsync is the exported OpenFileAsync func for the global Manager
+func OpenFileAsync(key string, flag int, perm os.FileMode) <-chan *OpenResp {
+	return mngr.OpenFileAsync(key, flag, perm)
+}
+
+// Delete is the exported Delete func for the global Manager
+func Delete(key string) <-chan error {
+	return mngr.Delete(key)
 }

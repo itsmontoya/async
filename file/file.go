@@ -7,17 +7,17 @@ import (
 	"github.com/missionMeteora/toolkit/errors"
 )
 
-func newFile(r *openRequest, a *aio.AIO) (f *File, err error) {
+func newFile(req *openRequest) (f *File, err error) {
 	// Acquire file struct from pool
 	f = p.acquireFile()
 	// Open underlying os.File
-	if f.f, err = os.OpenFile(r.key, r.flag, r.perm); err != nil {
+	if f.f, err = os.OpenFile(req.key, req.flag, req.perm); err != nil {
 		f = nil
 		return
 	}
 
 	// Set file's internal aio
-	f.a = a
+	f.qfn = req.qfn
 	return
 }
 
@@ -25,7 +25,7 @@ func newFile(r *openRequest, a *aio.AIO) (f *File, err error) {
 type File struct {
 	f *os.File
 	// Reference AIO instance
-	a *aio.AIO
+	qfn func(aio.Actioner)
 	// Closed state
 	closed bool
 }
@@ -52,7 +52,7 @@ func (f *File) ReadAsync(b []byte) <-chan *RWResp {
 	req.f = f.f
 
 	// Send request to request queue
-	f.a.Queue(req)
+	f.qfn(req)
 	return req.resp
 }
 
@@ -78,7 +78,7 @@ func (f *File) WriteAsync(b []byte) <-chan *RWResp {
 	req.f = f.f
 
 	// Send request to request queue
-	f.a.Queue(req)
+	f.qfn(req)
 	return req.resp
 }
 
@@ -105,7 +105,7 @@ func (f *File) SeekAsync(offset int64, whence int) <-chan *SeekResp {
 	req.whence = whence
 
 	// Send request to request queue
-	f.a.Queue(req)
+	f.qfn(req)
 	return req.resp
 }
 
@@ -123,7 +123,7 @@ func (f *File) SyncAsync() <-chan error {
 	req.f = f.f
 
 	// Send request to request queue
-	f.a.Queue(req)
+	f.qfn(req)
 	return req.resp
 }
 
@@ -141,7 +141,7 @@ func (f *File) CloseAsync() <-chan error {
 	} else {
 		f.closed = true
 		req.f = f
-		f.a.Queue(req)
+		f.qfn(req)
 	}
 
 	return req.resp

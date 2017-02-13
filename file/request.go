@@ -17,13 +17,13 @@ type openRequest struct {
 	flag int
 	perm os.FileMode
 
-	a    *aio.AIO
+	qfn  func(aio.Actioner)
 	resp chan *OpenResp
 }
 
 func (req *openRequest) Action() {
 	resp := p.acquireOpenResp()
-	resp.F, resp.Err = newFile(req, req.a)
+	resp.F, resp.Err = newFile(req)
 	req.resp <- resp
 	p.releaseOpenReq(req)
 }
