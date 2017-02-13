@@ -1,8 +1,12 @@
-package aio
+package file
 
 import (
 	"sync"
 )
+
+// Global pool for requests and responses
+// TODO: Decide if we want to bring the pools to the AIO-level, and give AIO's the ability to utilize their own pools
+var p = newPools()
 
 func newPools() *pools {
 	var p pools
@@ -225,6 +229,6 @@ func (p *pools) releaseSeekResp(resp *SeekResp) {
 func (p *pools) releaseFile(f *File) {
 	f.f = nil
 	f.closed = false
-	f.rq = nil
+	f.a = nil
 	p.files.Put(f)
 }

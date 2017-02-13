@@ -1,12 +1,13 @@
-package aio
+package file
 
 import (
 	"os"
 
+	"github.com/itsmontoya/aio"
 	"github.com/missionMeteora/toolkit/errors"
 )
 
-func newFile(r *openRequest, rq chan<- interface{}) (f *File, err error) {
+func newFile(r *openRequest, a *aio.AIO) (f *File, err error) {
 	// Acquire file struct from pool
 	f = p.acquireFile()
 	// Open underlying os.File
@@ -14,16 +15,17 @@ func newFile(r *openRequest, rq chan<- interface{}) (f *File, err error) {
 		f = nil
 		return
 	}
-	// Set file's request queue (send-only)
-	f.rq = rq
+
+	// Set file's internal aio
+	f.a = a
 	return
 }
 
 // File is a file
 type File struct {
 	f *os.File
-	// Request queue
-	rq chan<- interface{}
+	// Reference AIO instance
+	a *aio.AIO
 	// Closed state
 	closed bool
 }
@@ -31,80 +33,80 @@ type File struct {
 // Read will read a file
 func (f *File) Read(b []byte) (n int, err error) {
 	// Read and wait for response
-	rr := <-f.ReadAsync(b)
+	resp := <-f.ReadAsync(b)
 
-	n = rr.N
-	err = rr.Err
+	n = resp.N
+	err = resp.Err
 
 	// Release response back to the pool
-	p.releaseRWResp(rr)
+	p.releaseRWResp(resp)
 	return
 }
 
 // ReadAsync will read a file asynchronously
 func (f *File) ReadAsync(b []byte) <-chan *RWResp {
 	// Acquire read request from pool
-	r := p.acquireReadReq()
+	req := p.acquireReadReq()
 
-	r.b = b
-	r.f = f.f
+	req.b = b
+	req.f = f.f
 
 	// Send request to request queue
-	f.rq <- r
-	return r.resp
+	f.a.Queue(req)
+	return req.resp
 }
 
 // Write will write to a file
 func (f *File) Write(b []byte) (n int, err error) {
 	// Write and wait for response
-	rr := <-f.WriteAsync(b)
+	resp := <-f.WriteAsync(b)
 
-	n = rr.N
-	err = rr.Err
+	n = resp.N
+	err = resp.Err
 
 	// Release response back to the pool
-	p.releaseRWResp(rr)
+	p.releaseRWResp(resp)
 	return
 }
 
 // WriteAsync will write to a file asynchronously
 func (f *File) WriteAsync(b []byte) <-chan *RWResp {
 	// Acquire write request from pool
-	r := p.acquireWriteReq()
+	req := p.acquireWriteReq()
 
-	r.b = b
-	r.f = f.f
+	req.b = b
+	req.f = f.f
 
 	// Send request to request queue
-	f.rq <- r
-	return r.resp
+	f.a.Queue(req)
+	return req.resp
 }
 
 // Seek will seek within a file
 func (f *File) Seek(offset int64, whence int) (ret int64, err error) {
 	// Seek and wait for response
-	rr := <-f.SeekAsync(offset, whence)
+	resp := <-f.SeekAsync(offset, whence)
 
-	ret = rr.Ret
-	err = rr.Err
+	ret = resp.Ret
+	err = resp.Err
 
 	// Release response back to the pool
-	p.releaseSeekResp(rr)
+	p.releaseSeekResp(resp)
 	return
 }
 
 // SeekAsync will seek within a file asynchronously
 func (f *File) SeekAsync(offset int64, whence int) <-chan *SeekResp {
 	// Acquire seek request from pool
-	r := p.acquireSeekReq()
+	req := p.acquireSeekReq()
 
-	r.f = f.f
-	r.offset = offset
-	r.whence = whence
+	req.f = f.f
+	req.offset = offset
+	req.whence = whence
 
 	// Send request to request queue
-	f.rq <- r
-	return r.resp
+	f.a.Queue(req)
+	return req.resp
 }
 
 // Sync will sync a file
@@ -116,13 +118,13 @@ func (f *File) Sync() (err error) {
 // SyncAsync will sync a file asynchronously
 func (f *File) SyncAsync() <-chan error {
 	// Acquire seek request from pool
-	r := p.acquireSyncReq()
+	req := p.acquireSyncReq()
 
-	r.f = f.f
+	req.f = f.f
 
 	// Send request to request queue
-	f.rq <- r
-	return r.resp
+	f.a.Queue(req)
+	return req.resp
 }
 
 // Close will close a file
@@ -132,15 +134,15 @@ func (f *File) Close() error {
 
 // CloseAsync will close a file asynchronously
 func (f *File) CloseAsync() <-chan error {
-	r := p.acquireCloseReq()
+	req := p.acquireCloseReq()
 	if f.closed {
 		// File is already closed, send error to response
-		r.resp <- errors.ErrIsClosed
+		req.resp <- errors.ErrIsClosed
 	} else {
 		f.closed = true
-		r.f = f
-		f.rq <- r
+		req.f = f
+		f.a.Queue(req)
 	}
 
-	return r.resp
+	return req.resp
 }

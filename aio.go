@@ -2,13 +2,8 @@ package aio
 
 import (
 	"log"
-	"os"
 	"runtime"
 )
-
-// Global pool for requests and responses
-// TODO: Decide if we want to bring the pools to the AIO-level, and give AIO's the ability to utilize their own pools
-var p = newPools()
 
 const (
 	// WarningInvalidNumThreads is logged when the number of threads are less than one
@@ -21,7 +16,7 @@ const (
 func New(numThreads int) *AIO {
 	a := AIO{
 		// Create request queue
-		rq: make(chan interface{}, 1024*32),
+		rq: make(chan Actioner, 1024*32),
 	}
 
 	if numThreads < 1 {
@@ -48,52 +43,15 @@ func New(numThreads int) *AIO {
 
 // AIO does stuff
 type AIO struct {
-	rq chan interface{}
+	rq chan Actioner
 }
 
-// Open will open a new file for reading
-func (a *AIO) Open(key string) (f *File, err error) {
-	return a.OpenFile(key, os.O_RDONLY, 0)
+// Queue will add an item to the request queue
+func (a *AIO) Queue(req Actioner) {
+	a.rq <- req
 }
 
-// OpenFile will open a new file with flag and perm
-func (a *AIO) OpenFile(key string, flag int, perm os.FileMode) (f *File, err error) {
-	// Call OpenFileAsync and wait for the channel to return
-	resp := <-a.OpenFileAsync(key, flag, perm)
-
-	// Set f and err from response
-	f = resp.F
-	err = resp.Err
-
-	// Return response to the pool
-	p.releaseOpenResp(resp)
-	return
-}
-
-// OpenFileAsync will open a new file with flag and perm asynchronously
-func (a *AIO) OpenFileAsync(key string, flag int, perm os.FileMode) <-chan *OpenResp {
-	// Acquire open request from pool
-	or := p.acquireOpenReq()
-
-	// Set open request values
-	or.key = key
-	or.flag = flag
-	or.perm = perm
-
-	// Send request to queue
-	a.rq <- or
-	return or.resp
-}
-
-// Delete will delete a file
-func (a *AIO) Delete(key string) <-chan error {
-	// Acquire delete request from pool
-	dr := p.acquireDelReq()
-
-	// Set delete request key
-	dr.key = key
-
-	// Send request to queue
-	a.rq <- dr
-	return dr.resp
+// Actioner fulfills actions
+type Actioner interface {
+	Action()
 }
