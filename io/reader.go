@@ -1,13 +1,9 @@
-package reader
+package io
 
-import (
-	"io"
+import "io"
 
-	"github.com/itsmontoya/aio"
-)
-
-// New will return a new asynchronous reader
-func New(r io.Reader) *Reader {
+// NewReader will return a new asynchronous reader
+func NewReader(r io.Reader) *Reader {
 	return &Reader{r}
 }
 
@@ -19,23 +15,41 @@ type Reader struct {
 
 // Read will read
 func (r *Reader) Read(b []byte) (n int, err error) {
-	resp := <-r.ReadAsync(b)
-	n = resp.N
-	err = resp.Err
-	p.releaseResponse(resp)
-	return
+	return read(r.r, b)
 }
 
 // ReadAsync will read asynchronously
 func (r *Reader) ReadAsync(b []byte) <-chan *RWResp {
-	// Acquire request
-	req := p.acquireRequest()
+	return readAsync(r.r, b)
+}
 
-	// Set values
-	req.r = r.r
-	req.b = b
+// NewReadCloser will return a new asynchronous read closer
+func NewReadCloser(rc io.ReadCloser) *ReadCloser {
+	return &ReadCloser{rc}
+}
 
-	// Send request to queue
-	aio.Queue(req)
-	return req.resp
+// ReadCloser is an asynchronous wrapper for an io.ReadCloser
+type ReadCloser struct {
+	// Internal reader
+	rc io.ReadCloser
+}
+
+// Read will read
+func (rc *ReadCloser) Read(b []byte) (n int, err error) {
+	return read(rc.rc, b)
+}
+
+// ReadAsync will read asynchronously
+func (rc *ReadCloser) ReadAsync(b []byte) <-chan *RWResp {
+	return readAsync(rc.rc, b)
+}
+
+// Close will close
+func (rc *ReadCloser) Close() (err error) {
+	return close(rc.rc)
+}
+
+// CloseAsync will close asynchronously
+func (rc *ReadCloser) CloseAsync() <-chan error {
+	return closeAsync(rc.rc)
 }

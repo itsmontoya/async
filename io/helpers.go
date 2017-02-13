@@ -1,85 +1,65 @@
-package reader
+package io
 
 import (
 	"io"
-	"sync"
+
+	"github.com/itsmontoya/aio"
 )
 
-// Global pool for requests and responses
-// TODO: Decide if we want to bring the pools to the AIO-level, and give AIO's the ability to utilize their own pools
-var p = newPools()
-
-func newPools() *pools {
-	var p pools
-
-	p.requests.New = func() interface{} {
-		return newReadReq()
-	}
-
-	p.responses.New = func() interface{} {
-		return newResp()
-	}
-
-	return &p
-}
-
-type pools struct {
-	requests  sync.Pool
-	responses sync.Pool
-}
-
-func (p *pools) acquireRequest() (req *readRequest) {
-	var ok bool
-	if req, ok = p.requests.Get().(*readRequest); !ok {
-		panic("invalid pool type")
-	}
-
+func read(r io.Reader, b []byte) (n int, err error) {
+	resp := <-readAsync(r, b)
+	n = resp.N
+	err = resp.Err
+	p.releaseRWResp(resp)
 	return
 }
 
-func (p *pools) acquireResponse() (resp *RWResp) {
-	var ok bool
-	if resp, ok = p.responses.Get().(*RWResp); !ok {
-		panic("invalid pool type")
-	}
+func readAsync(r io.Reader, b []byte) <-chan *RWResp {
+	// Acquire request
+	req := p.acquireReadReq()
 
+	// Set values
+	req.r = r
+	req.b = b
+
+	// Send request to queue
+	aio.Queue(req)
+	return req.resp
+}
+
+func write(w io.Writer, b []byte) (n int, err error) {
+	resp := <-writeAsync(w, b)
+	n = resp.N
+	err = resp.Err
+	p.releaseRWResp(resp)
 	return
 }
 
-func (p *pools) releaseRequest(req *readRequest) {
-	p.requests.Put(req)
+func writeAsync(w io.Writer, b []byte) <-chan *RWResp {
+	// Acquire request
+	req := p.acquireWriteReq()
+
+	// Set values
+	req.w = w
+	req.b = b
+
+	// Send request to queue
+	aio.Queue(req)
+	return req.resp
 }
 
-func (p *pools) releaseResponse(resp *RWResp) {
-	p.responses.Put(resp)
+func close(c io.Closer) (err error) {
+	return <-closeAsync(c)
 }
 
-func newReadReq() *readRequest {
-	return &readRequest{
-		resp: make(chan *RWResp),
-	}
-}
+func closeAsync(c io.Closer) <-chan error {
+	// Acquire request
+	req := p.acquireCloseReq()
 
-type readRequest struct {
-	r io.Reader
-	b []byte
+	// Set values
+	req.c = c
 
-	resp chan *RWResp
-}
-
-func (req *readRequest) Action() {
-	resp := newResp()
-	resp.N, resp.Err = req.r.Read(req.b)
-	req.resp <- resp
-	p.releaseRequest(req)
-}
-
-func newResp() *RWResp {
-	return &RWResp{}
-}
-
-// RWResp is a response for a read request
-type RWResp struct {
-	N   int
-	Err error
+	// Send request to queue
+	aio.Queue(req)
+	return req.resp
 }
