@@ -127,6 +127,31 @@ func (f *File) SyncAsync() <-chan error {
 	return req.resp
 }
 
+// Stat will return the os.Stat for a file
+func (f *File) Stat() (fi os.FileInfo, err error) {
+	// Sync and wait for response
+	resp := <-f.StatAsync()
+
+	fi = resp.Fi
+	err = resp.Err
+
+	// Release response back to the pool
+	p.releaseStatResp(resp)
+	return
+}
+
+// StatAsync will return the os.Stat for a file asynchronously
+func (f *File) StatAsync() <-chan *StatResp {
+	// Acquire seek request from pool
+	req := p.acquireStatReq()
+
+	req.f = f.f
+
+	// Send request to request queue
+	f.qfn(req)
+	return req.resp
+}
+
 // Close will close a file
 func (f *File) Close() error {
 	return <-f.CloseAsync()

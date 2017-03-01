@@ -30,6 +30,10 @@ func newPools() *pools {
 		return newSyncReq()
 	}
 
+	p.statReqs.New = func() interface{} {
+		return newStatReq()
+	}
+
 	p.closeReqs.New = func() interface{} {
 		return newCloseReq()
 	}
@@ -50,6 +54,10 @@ func newPools() *pools {
 		return newSeekResp()
 	}
 
+	p.statResps.New = func() interface{} {
+		return newStatResp()
+	}
+
 	p.files.New = func() interface{} {
 		return &File{}
 	}
@@ -63,12 +71,14 @@ type pools struct {
 	writeReqs sync.Pool
 	seekReqs  sync.Pool
 	syncReqs  sync.Pool
+	statReqs  sync.Pool
 	closeReqs sync.Pool
 	delReqs   sync.Pool
 
 	openResps sync.Pool
 	rwResps   sync.Pool
 	seekResps sync.Pool
+	statResps sync.Pool
 
 	files sync.Pool
 }
@@ -112,6 +122,15 @@ func (p *pools) acquireSeekReq() (req *seekRequest) {
 func (p *pools) acquireSyncReq() (req *syncRequest) {
 	var ok bool
 	if req, ok = p.syncReqs.Get().(*syncRequest); !ok {
+		panic("invalid pool type")
+	}
+
+	return
+}
+
+func (p *pools) acquireStatReq() (req *statRequest) {
+	var ok bool
+	if req, ok = p.statReqs.Get().(*statRequest); !ok {
 		panic("invalid pool type")
 	}
 
@@ -163,6 +182,15 @@ func (p *pools) acquireSeekResp() (resp *SeekResp) {
 	return
 }
 
+func (p *pools) acquireStatResp() (resp *StatResp) {
+	var ok bool
+	if resp, ok = p.statResps.Get().(*StatResp); !ok {
+		panic("invalid pool type")
+	}
+
+	return
+}
+
 func (p *pools) acquireFile() (f *File) {
 	var ok bool
 	if f, ok = p.files.Get().(*File); !ok {
@@ -200,6 +228,11 @@ func (p *pools) releaseSyncReq(req *syncRequest) {
 	p.syncReqs.Put(req)
 }
 
+func (p *pools) releaseStatReq(req *statRequest) {
+	req.f = nil
+	p.statReqs.Put(req)
+}
+
 func (p *pools) releaseCloseReq(req *closeRequest) {
 	p.closeReqs.Put(req)
 }
@@ -224,6 +257,12 @@ func (p *pools) releaseSeekResp(resp *SeekResp) {
 	resp.Ret = 0
 	resp.Err = nil
 	p.seekResps.Put(resp)
+}
+
+func (p *pools) releaseStatResp(resp *StatResp) {
+	resp.Fi = nil
+	resp.Err = nil
+	p.statResps.Put(resp)
 }
 
 func (p *pools) releaseFile(f *File) {
