@@ -107,6 +107,25 @@ func (req *syncRequest) Action() {
 	p.releaseSyncReq(req)
 }
 
+func newStatRequest() *statRequest {
+	return &statRequest{
+		resp: make(chan *StatResp),
+	}
+}
+
+type statRequest struct {
+	f *os.File
+
+	resp chan *StatResp
+}
+
+func (req *statRequest) Action() {
+	resp := p.acquireStatResp()
+	resp.Fi, resp.Err = req.f.Stat()
+	req.resp <- resp
+	p.releaseStatReq(req)
+}
+
 func newCloseReq() *closeRequest {
 	return &closeRequest{
 		resp: make(chan error),

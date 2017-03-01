@@ -23,5 +23,6 @@ type Interface interface {
 	Read(b []byte) (n int, err error)
 	Write(b []byte) (n int, err error)
 	Sync() error
+	Stat() (os.FileInfo, error)
 	Close() error
 }
