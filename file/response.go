@@ -1,8 +1,6 @@
 package file
 
-import (
-	"os"
-)
+import "os"
 
 func newOpenResp() *OpenResp {
 	return &OpenResp{}
