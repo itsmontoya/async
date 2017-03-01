@@ -107,7 +107,7 @@ func (req *syncRequest) Action() {
 	p.releaseSyncReq(req)
 }
 
-func newStatRequest() *statRequest {
+func newStatReq() *statRequest {
 	return &statRequest{
 		resp: make(chan *StatResp),
 	}

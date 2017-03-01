@@ -30,6 +30,10 @@ func newPools() *pools {
 		return newSyncReq()
 	}
 
+	p.statReqs.New = func() interface{} {
+		return newStatReq()
+	}
+
 	p.closeReqs.New = func() interface{} {
 		return newCloseReq()
 	}
@@ -48,6 +52,10 @@ func newPools() *pools {
 
 	p.seekResps.New = func() interface{} {
 		return newSeekResp()
+	}
+
+	p.statResps.New = func() interface{} {
+		return newStatResp()
 	}
 
 	p.files.New = func() interface{} {
