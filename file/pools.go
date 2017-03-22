@@ -2,6 +2,7 @@ package file
 
 import (
 	"sync"
+	"sync/atomic"
 )
 
 // Global pool for requests and responses
@@ -197,6 +198,7 @@ func (p *pools) acquireFile() (f *File) {
 		panic("invalid pool type")
 	}
 
+	atomic.SwapInt32(&f.closed, 0)
 	return
 }
 
@@ -267,7 +269,6 @@ func (p *pools) releaseStatResp(resp *StatResp) {
 
 func (p *pools) releaseFile(f *File) {
 	f.f = nil
-	f.closed = false
 	f.qfn = nil
 	p.files.Put(f)
 }

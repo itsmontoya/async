@@ -2,6 +2,7 @@ package file
 
 import (
 	"os"
+	"sync/atomic"
 
 	"github.com/itsmontoya/async"
 	"github.com/missionMeteora/toolkit/errors"
@@ -27,7 +28,7 @@ type File struct {
 	// Reference AIO instance
 	qfn async.QueueFn
 	// Closed state
-	closed bool
+	closed int32
 }
 
 // Read will read a file
@@ -160,11 +161,13 @@ func (f *File) Close() error {
 // CloseAsync will close a file asynchronously
 func (f *File) CloseAsync() <-chan error {
 	req := p.acquireCloseReq()
-	if f.closed {
+	if !atomic.CompareAndSwapInt32(&f.closed, 0, 1) {
 		// File is already closed, send error to response
-		req.resp <- errors.ErrIsClosed
+		go func() {
+			req.resp <- errors.ErrIsClosed
+			p.releaseCloseReq(req)
+		}()
 	} else {
-		f.closed = true
 		req.f = f
 		f.qfn(req)
 	}
