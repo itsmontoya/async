@@ -88,6 +88,11 @@ func OpenFileAsync(key string, flag int, perm os.FileMode) <-chan *OpenResp {
 	return mngr.OpenFileAsync(key, flag, perm)
 }
 
+// Create is the exported Create func for the global manager
+func Create(key string) (f *File, err error) {
+	return mngr.OpenFile(key, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+}
+
 // Delete is the exported Delete func for the global Manager
 func Delete(key string) <-chan error {
 	return mngr.Delete(key)
